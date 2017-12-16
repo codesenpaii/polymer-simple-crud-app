@@ -1,7 +1,3 @@
-# polymer-simple-crud-app
-
-Polymer 2.0 simple CRUD application with REST API via NowDB - http://nowdb.net/
-
 ## Setup NowDB
 
 Fill `src/polymer-simple-crud-app/data/config.json` with your NowDB API credential. Get it on [nowdb](http://nowdb.net).
