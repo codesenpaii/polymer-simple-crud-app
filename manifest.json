@@ -1,7 +1,7 @@
 {
   "name": "polymer-simple-crud",
   "short_name": "polymer-simple-crud",
-  "description": "Polymer simple CRUD application using pouchdb, baasic and vaadin",
+  "description": "Polymer 2.x simple CRUD application with NowDB",
   "start_url": "/",
   "display": "standalone"
 }
