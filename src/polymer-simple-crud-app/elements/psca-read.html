@@ -1,0 +1,86 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="psca-read">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <!-- [Read] Quote Ajax -->
+    <iron-ajax id="read-ajax" 
+      auto
+      url="[[ url ]]"
+      handle-as="json"
+      on-response="getQuotes"
+      debounce-duration="100">
+    </iron-ajax>
+    
+    <!-- Quote List -->
+    <template is="dom-repeat" items="[[ quotes ]]" as="item">
+      <div class="quote" data-id$="[[ item.id ]]" data-index$="[[ index ]]">
+        [[ item.quote ]]
+        <small>[[ item.quotee ]]</small>
+        <div class="quote-action">
+          <button on-click="enableEditMode">Edit</button>
+          <button on-click="enableDeleteMode">Delete</button>
+        </div>
+      </div>
+    </template>
+
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class PscaRead extends Polymer.Element {
+      static get is() { return 'psca-read'; }
+      static get properties() {
+        return {
+          url: String,
+          quotes: {
+            type: Array,
+            notify: true
+          },
+          editMode: {
+            type: Object,
+            notify: true
+          },
+          deleteMode: {
+            type: Object,
+            notify: true
+          }
+        }
+      }
+      
+      // On [READ] iron-ajax request completed
+      getQuotes (event) {
+        const quotes = event.detail.response
+        this.set('quotes', quotes.reverse()) // Sort descending
+      }
+
+      // Trigger editMode Observer in psca-update.html
+      enableEditMode (event) {
+        const domEl = event.target.closest('.quote')
+        this.set('editMode', {
+          index: domEl.dataset.index,
+          value: this.quotes[domEl.dataset.index] // Need one quote object
+        })
+      }
+
+      // Trigger deleteMode Observer in psca-delete.html
+      enableDeleteMode (event) {
+        const domEl = event.target.closest('.quote')
+        this.set('deleteMode', {
+          index: domEl.dataset.index,
+          id: domEl.dataset.id // Just need id
+        })
+      }
+    }
+    window.customElements.define(PscaRead.is, PscaRead);
+  </script>
+</dom-module>

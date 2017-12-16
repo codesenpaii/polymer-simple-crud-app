@@ -1,0 +1,79 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/iron-form/iron-form.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+
+<dom-module id="psca-update">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <!-- [Update] Quote's Dialog and Form -->
+    <paper-dialog id="edit-modal">
+      <div class="header">Edit Quote</div>
+      <div class="box">
+        <iron-form id="update-form" on-iron-form-presubmit="changeFormMethod" on-iron-form-response="updateQuote">
+          <form method="post" action="[[ url ]]">
+            <input type="hidden" name="token" value="[[ config.token ]]">
+            <input type="hidden" name="project" value="[[ config.project ]]">
+            <input type="hidden" name="collection" value="[[ config.collection ]]">
+            <input type="hidden" name="appid" value="[[ config.appid ]]">
+            <input type="hidden" name="id" value="[[ editMode.value.id ]]">
+
+            <textarea name="quote" placeholder="Insert quotes here" value="{{ editMode.value.quote::input }}" required></textarea>
+            <input type="text" name="quotee" placeholder="Quotee" value="{{ editMode.value.quotee::input }}" required>
+    
+            <input type="submit" value="Update">
+          </form>
+        </iron-form>
+      </div>
+    </paper-dialog>
+
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class PscaUpdate extends Polymer.Element {
+      static get is() { return 'psca-update'; }
+      static get properties() {
+        return {
+          config: Object,
+          url: String,
+          quotes: {
+            type: Array,
+            notify: true
+          },
+          editMode: Object
+        }
+      }
+      static get observers() {
+        return [
+          '_editModeUpdated(editMode)'
+        ]
+      }
+
+      _editModeUpdated (params) {
+        this.$['edit-modal'].open()
+      }
+
+      // Iron-form only accept body params as post method
+      // but nowDB update_id via put method
+      changeFormMethod (event) {
+        this.$['update-form'].request.method = 'put'
+      }
+
+      updateQuote (event) {
+        if (event.detail.status == 200) {
+          this.set('quotes.' + this.editMode.index, Object.assign({}, this.editMode.value))
+          this.$['edit-modal'].close()
+        }
+      }
+    }
+    window.customElements.define(PscaUpdate.is, PscaUpdate);
+  </script>
+</dom-module>

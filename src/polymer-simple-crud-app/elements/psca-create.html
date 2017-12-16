@@ -1,0 +1,61 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/iron-form/iron-form.html">
+<link rel="import" href="../../../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="psca-create">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <!-- [Create] Quote's Form -->
+    <iron-form id="create-form" on-iron-form-response="insertQuote">
+      <form method="post" action="[[ url ]]">
+        <input type="hidden" name="token" value="[[ config.token ]]">
+        <input type="hidden" name="project" value="[[ config.project ]]">
+        <input type="hidden" name="collection" value="[[ config.collection ]]">
+        <input type="hidden" name="appid" value="[[ config.appid ]]">
+
+        <textarea name="quote" placeholder="Insert quotes here" required></textarea>
+        <input type="text" name="quotee" placeholder="Quotee" required>
+
+        <input type="submit" value="Create">
+      </form>
+    </iron-form>
+    
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class PscaCreate extends Polymer.Element {
+      static get is() { return 'psca-create'; }
+      static get properties() {
+        return {
+          config: Object,
+          url: String,
+          quotes: {
+            type: Array,
+            notify: true
+          }
+        }
+      }
+      
+      // On [CREATE] iron-form request completed
+      insertQuote (event) {
+        if (event.detail.status == 200) {
+          // Append created quote to quote list
+          const quote = event.detail.response[0]
+          this.unshift('quotes', quote) // Add to first element
+          // Clear form input
+          this.$['create-form'].reset()
+        }
+      }
+    }
+    window.customElements.define(PscaCreate.is, PscaCreate);
+  </script>
+</dom-module>
