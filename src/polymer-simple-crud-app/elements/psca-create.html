@@ -1,6 +1,13 @@
 <link rel="import" href="../../../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../../../bower_components/iron-form/iron-form.html">
-<link rel="import" href="../../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-spinner/paper-spinner-lite.html">
+
+<link rel="import" href="../../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
 
 <dom-module id="psca-create">
   <template>
@@ -8,23 +15,104 @@
       :host {
         display: block;
       }
+      paper-dialog {
+        width: 350px;
+      }
+      paper-dialog .header {
+        color: #fff;
+        background: var(--app-primary-color);
+        font-family: var(--app-primary-font);
+        font-size: 1.3em;
+        margin-top: 0;
+        padding: 20px;
+      }
+      paper-dialog .header > iron-icon {
+        margin-right: .75em;
+      }
+      paper-textarea {
+        outline: none;
+      }
+      paper-textarea, paper-input {
+        --paper-input-container-input: {
+          font-size: 15px;
+          padding-bottom: 10px;
+        };
+        --paper-input-container-label: {
+          padding-bottom: 20px;
+          margin-top: 10px;
+        }
+      }
+      .buttons {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1em;
+      }
+      .buttons paper-button {
+        margin-right: 0;
+        margin-left: .5em;
+        padding-left: 1em;
+        padding-right: 1em;
+      }
+      .buttons paper-button.dialog-confirm {
+        background-color: #4889c3;
+        color: #fff;
+      }
+      .buttons paper-button.dialog-dismiss {
+        background-color: #e0e0e0;
+      }
+      paper-button > paper-spinner-lite {
+        --paper-spinner-stroke-width: 3px;
+        --paper-spinner-color: var(--google-grey-100);
+        width : 15px;
+        height: 15px;
+        margin-right: 10px;
+        display: none;
+      }
+      paper-button > paper-spinner-lite[active] {
+        display: block;
+      }
     </style>
 
-    <!-- [Create] Quote's Form -->
-    <iron-form id="create-form" on-iron-form-response="insertQuote">
-      <form method="post" action="[[ url ]]">
-        <input type="hidden" name="token" value="[[ config.token ]]">
-        <input type="hidden" name="project" value="[[ config.project ]]">
-        <input type="hidden" name="collection" value="[[ config.collection ]]">
-        <input type="hidden" name="appid" value="[[ config.appid ]]">
+    <!-- [Update] Quote's Dialog and Form -->
+    <paper-dialog id="create-modal" 
+      no-cancel-on-outside-click
+      with-backdrop 
+      on-iron-overlay-opened="patchOverlay"
+      on-iron-overlay-closed="disableCreateMode">
 
-        <textarea name="quote" placeholder="Insert quotes here" required></textarea>
-        <input type="text" name="quotee" placeholder="Quotee" required>
+      <div class="header">
+        <iron-icon icon="book"></iron-icon>
+        Create Quote
+      </div>
+      <div class="box">
+        <!-- Submit form on-enter -->
+        <iron-a11y-keys target="create-form" keys="enter" on-keys-pressed="submitForm"></iron-a11y-keys>
 
-        <input type="submit" value="Create">
-      </form>
-    </iron-form>
-    
+        <iron-form id="create-form" on-iron-form-response="insertQuote">
+          <form method="post" action="[[ url ]]">
+            <input type="hidden" name="token" value="[[ config.token ]]">
+            <input type="hidden" name="project" value="[[ config.project ]]">
+            <input type="hidden" name="collection" value="[[ config.collection ]]">
+            <input type="hidden" name="appid" value="[[ config.appid ]]">
+            <input type="hidden" name="id" value="[[ createMode.value.id ]]">
+
+            <paper-textarea name="quote" spellcheck="false" 
+              label="Quotes" placeholder="Insert quotes here" required></paper-textarea>
+            <paper-input type="text" name="quotee" spellcheck="false" 
+              label="Quotee" placeholder="Quotee" required></paper-input>
+
+            <div class="buttons">
+              <paper-button class="dialog-dismiss" dialog-dismiss>Cancel</paper-button>
+              <paper-button class="dialog-confirm" on-click="submitForm">
+                <paper-spinner-lite id="spinner" active$="[[createMode.loading]]"></paper-spinner-lite>
+                Create
+              </paper-button>
+            </div>
+          </form>
+        </iron-form>
+      </div>
+    </paper-dialog>
+
   </template>
 
   <script>
@@ -41,18 +129,58 @@
           quotes: {
             type: Array,
             notify: true
-          }
+          },
+          createMode: Object
         }
       }
-      
-      // On [CREATE] iron-form request completed
+      static get observers() {
+        return [
+          '_createModeUpdated(createMode.enabled)'
+        ]
+      }
+
+      _createModeUpdated (enabled) {
+        if (enabled) {
+          this.$['create-modal'].open()
+        }
+      }
+
+      // On overlay closed disabled the create mode
+      disableCreateMode () {
+        this.set('createMode.enabled', false)
+      }
+
       insertQuote (event) {
         if (event.detail.status == 200) {
           // Append created quote to quote list
           const quote = event.detail.response[0]
           this.unshift('quotes', quote) // Add to first element
-          // Clear form input
-          this.$['create-form'].reset()
+          this.$['create-modal'].close()
+        }
+        this.set('createMode.loading', false)
+      }
+
+      /***************/
+      /***  PATCH  ***/
+      /***************/
+
+      // Put overlay in the right stacking context
+      // iron-overlay cannot stay together with app-drawer-layout
+      //解决 bug: https://github.com/PolymerElements/paper-dialog/issues/7
+      patchOverlay (event) {
+        if (event.target.withBackdrop) {
+          event.target.parentNode.insertBefore(event.target.backdropElement, event.target)
+        }
+      }
+
+      // Submit form
+      // Submit form manually because of paper-input bug, can't press enter to submit
+      // and paper-button can't have type=submit, so submit on-click
+      submitForm () {
+        const form = this.$['create-form'];
+        if (form.validate()) {
+          this.set('createMode.loading', true)
+          form.submit()
         }
       }
     }

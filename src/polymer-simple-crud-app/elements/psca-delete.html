@@ -47,7 +47,7 @@
       removeQuote (event) {
         const self  = this
         // Update deletedId from clicked button
-        if (confirm("Are you sure?")) {
+        if (confirm("Delete quote '" + this.quotes[this.deleteMode.index].quote + "'.\n\nAre you sure?")) {
           this.$['delete-ajax'].generateRequest()
           this.removeComplete = () => {
             self.splice('quotes', this.deleteMode.index, 1)

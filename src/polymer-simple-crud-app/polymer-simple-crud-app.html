@@ -1,7 +1,18 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../../bower_components/iron-form/iron-form.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
-<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+
+<link rel="import" href="../../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
 
 <link rel="import" href="elements/psca-create.html">
 <link rel="import" href="elements/psca-read.html">
@@ -12,36 +23,125 @@
   <template>
     <style>
       :host {
+        --app-primary-font: 'Coustard', 'sans-serif', 'Arial';
+        --app-primary-color: #76a6d2;
+        --app-header-height: 70px;
+      
         display: block;
+      }
+      
+      app-drawer-layout:not([narrow]) [drawer-toggle] {
+        display: none;
+      }
+      
+      app-header {
+        font-family: var(--app-primary-font);
+        color: #fff;
+        background-color: var(--app-primary-color);
+      }
+      app-header a {
+        color: #fff;
+        text-decoration: none;
+        cursor: pointer;
+        pointer-events: initial;
+      }
+
+      app-header, app-toolbar {
+        height: var(--app-header-height);
+      }
+
+      app-toolbar > [main-title] iron-icon {
+        transform: scale(1.2);
+        margin: 0 10px;
+      }
+      app-toolbar > paper-button {
+        font-family: var(--app-primary-font);
+        text-transform: capitalize;
+      }
+      app-toolbar > paper-button:focus,
+      app-toolbar > paper-button:active {
+        font-weight: normal;
+      }
+
+      /* Edit Mode */
+
+      app-header-layout[edit-mode] > app-header,
+      app-header-layout[create-mode] > app-header {
+        z-index: 0;
+      }
+
+      paper-button > iron-icon {
+        margin-right: .75em;
+      }
+      paper-progress {
+        width: 100%;
+      }
+
+      main#content {
+        padding: 2em 2em 3em;
       }
     </style>
 
-    <psca-create 
-      config="[[ config ]]" 
-      url="[[ urls.create ]]" 
-      quotes="{{ quotes }}">
-    </psca-create>
-    
-    <psca-read 
-      url="[[ urls.read ]]" 
-      quotes="{{ quotes }}"
-      edit-mode="{{ editMode }}"
-      delete-mode="{{ deleteMode }}">
-    </psca-read>
+    <!-- App Layout Container -->
+    <app-drawer-layout fullbleed narrow="{{narrow}}">
+      <app-header-layout has-scrolling-region 
+        create-mode$=[[createMode.enabled]]
+        edit-mode$=[[editMode.enabled]]>
+        
+        <!-- Header -->
+        <app-header slot="header" fixed effects="waterfall">
+          <app-toolbar>
 
-    <psca-update 
-      config="[[ config ]]" 
-      url="[[ urls.update ]]" 
-      quotes="{{ quotes }}"
-      edit-mode="{{ editMode }}">
-    </psca-update>
+            <div main-title>
+              <a href="#">
+                <iron-icon icon="polymer"></iron-icon>
+                Polymer Simple CRUD
+              </a>
+            </div>
+            <paper-button on-click="enableCreateMode">
+              <iron-icon icon="add"></iron-icon>
+              Add Quote
+            </paper-button>
 
-    <psca-delete 
-      url="[[ urls.delete ]]" 
-      quotes="{{ quotes }}"
-      delete-mode="{{ deleteMode }}">
-    </psca-delete>
-    
+          </app-toolbar>
+          <!-- <paper-progress value="50" indeterminate bottom-item></paper-progress> -->
+        </app-header>
+        
+        <!-- Main content -->
+        <main id="content">
+
+          <psca-create 
+            config="[[ config ]]" 
+            url="[[ urls.create ]]" 
+            quotes="{{ quotes }}"
+            create-mode="{{ createMode }}">
+          </psca-create>
+          
+          <psca-read 
+            url="[[ urls.read ]]" 
+            quotes="{{ quotes }}"
+            edit-mode="{{ editMode }}"
+            delete-mode="{{ deleteMode }}">
+          </psca-read>
+        
+          <psca-update 
+            config="[[ config ]]" 
+            url="[[ urls.update ]]" 
+            quotes="{{ quotes }}"
+            edit-mode="{{ editMode }}">
+          </psca-update>
+        
+          <psca-delete 
+            url="[[ urls.delete ]]" 
+            quotes="{{ quotes }}"
+            delete-mode="{{ deleteMode }}">
+          </psca-delete>
+
+        </main>
+
+      </app-header-layout>
+    </app-drawer-layout>
+  
   </template>
 
   <script>
@@ -57,7 +157,20 @@
           urls  : Object,
           quotes: Array,
           // Current item selector information
-          editMode: Object,
+          createMode: {
+            type: Object,
+            value: {
+              enabled: false,
+              loading: false
+            }
+          },
+          editMode: {
+            type: Object,
+            value: {
+              enabled: false,
+              loading: false
+            }
+          },
           deleteMode: Object
         }
       }
@@ -101,6 +214,11 @@
           }
         }
         xobj.send(null)
+      }
+
+      // Trigger createMode Observer in psca-create.html
+      enableCreateMode () {
+        this.set('createMode.enabled', true)
       }
     }
 
