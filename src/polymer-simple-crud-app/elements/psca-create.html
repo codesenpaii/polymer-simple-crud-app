@@ -9,75 +9,16 @@
 
 <link rel="import" href="../../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
 
+<link rel="import" href="../utilities/psca-form-dialog--styles.html">
+<link rel="import" href="../utilities/psca-form-dialog--behavior.html">
+
 <dom-module id="psca-create">
   <template>
-    <style>
-      :host {
-        display: block;
-      }
-      paper-dialog {
-        width: 350px;
-      }
-      paper-dialog .header {
-        color: #fff;
-        background: var(--app-primary-color);
-        font-family: var(--app-primary-font);
-        font-size: 1.3em;
-        margin-top: 0;
-        padding: 20px;
-      }
-      paper-dialog .header > iron-icon {
-        margin-right: .75em;
-      }
-      paper-textarea {
-        outline: none;
-      }
-      paper-textarea, paper-input {
-        --paper-input-container-input: {
-          font-size: 15px;
-          padding-bottom: 10px;
-        };
-        --paper-input-container-label: {
-          padding-bottom: 20px;
-          margin-top: 10px;
-        }
-      }
-      .buttons {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 1em;
-      }
-      .buttons paper-button {
-        margin-right: 0;
-        margin-left: .5em;
-        padding-left: 1em;
-        padding-right: 1em;
-      }
-      .buttons paper-button.dialog-confirm {
-        background-color: #4889c3;
-        color: #fff;
-      }
-      .buttons paper-button.dialog-dismiss {
-        background-color: #e0e0e0;
-      }
-      paper-button > paper-spinner-lite {
-        --paper-spinner-stroke-width: 3px;
-        --paper-spinner-color: var(--google-grey-100);
-        width : 15px;
-        height: 15px;
-        margin-right: 10px;
-        display: none;
-      }
-      paper-button > paper-spinner-lite[active] {
-        display: block;
-      }
-    </style>
+    <style include="psca-form-dialog-styles"></style>
 
     <!-- [Update] Quote's Dialog and Form -->
     <paper-dialog id="create-modal" 
-      no-cancel-on-outside-click
       with-backdrop 
-      on-iron-overlay-opened="patchOverlay"
       on-iron-overlay-closed="disableCreateMode">
 
       <div class="header">
@@ -90,16 +31,16 @@
 
         <iron-form id="create-form" on-iron-form-response="insertQuote">
           <form method="post" action="[[ url ]]">
+
             <input type="hidden" name="token" value="[[ config.token ]]">
             <input type="hidden" name="project" value="[[ config.project ]]">
             <input type="hidden" name="collection" value="[[ config.collection ]]">
             <input type="hidden" name="appid" value="[[ config.appid ]]">
-            <input type="hidden" name="id" value="[[ createMode.value.id ]]">
 
-            <paper-textarea name="quote" spellcheck="false" 
-              label="Quotes" placeholder="Insert quotes here" required></paper-textarea>
+            <paper-textarea name="quote" spellcheck="false" autofocus
+              label="Quotes" placeholder="Insert quotes here" value="[[ quote ]]" required></paper-textarea>
             <paper-input type="text" name="quotee" spellcheck="false" 
-              label="Quotee" placeholder="Quotee" required></paper-input>
+              label="Quotee" placeholder="Quotee" value="[[ quotee ]]" required></paper-input>
 
             <div class="buttons">
               <paper-button class="dialog-dismiss" dialog-dismiss>Cancel</paper-button>
@@ -108,6 +49,7 @@
                 Create
               </paper-button>
             </div>
+            
           </form>
         </iron-form>
       </div>
@@ -120,7 +62,7 @@
      * @customElement
      * @polymer
      */
-    class PscaCreate extends Polymer.Element {
+    class PscaCreate extends PscaFormDialogBehaviour {
       static get is() { return 'psca-create'; }
       static get properties() {
         return {
@@ -130,7 +72,11 @@
             type: Array,
             notify: true
           },
-          createMode: Object
+          createMode: Object,
+          // Current form values
+          // Use data binding to make resetting form easier
+          quote : String,
+          quotee: String
         }
       }
       static get observers() {
@@ -155,22 +101,14 @@
           // Append created quote to quote list
           const quote = event.detail.response[0]
           this.unshift('quotes', quote) // Add to first element
+          
           this.$['create-modal'].close()
+
+          // Clear form
+          this.quote  = '';
+          this.quotee = '';
         }
         this.set('createMode.loading', false)
-      }
-
-      /***************/
-      /***  PATCH  ***/
-      /***************/
-
-      // Put overlay in the right stacking context
-      // iron-overlay cannot stay together with app-drawer-layout
-      //解决 bug: https://github.com/PolymerElements/paper-dialog/issues/7
-      patchOverlay (event) {
-        if (event.target.withBackdrop) {
-          event.target.parentNode.insertBefore(event.target.backdropElement, event.target)
-        }
       }
 
       // Submit form

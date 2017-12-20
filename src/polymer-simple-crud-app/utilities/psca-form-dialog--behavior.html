@@ -1,0 +1,38 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="psca-form-dialog-behaviour">
+  <template>
+  </template>
+
+  <script>
+    class PscaFormDialogBehaviour extends Polymer.Element {
+      static get is() { return 'psca-form-dialog'; }
+      
+      ready() {
+        super.ready();
+
+        const dialog = this.shadowRoot.querySelector('paper-dialog');
+
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          dialog.addEventListener('iron-overlay-opened', this.patchOverlay.bind(this));
+        });
+      }
+
+      /***************/
+      /***  PATCH  ***/
+      /***************/
+
+      // Put overlay in the right stacking context
+      // iron-overlay cannot stay together with app-drawer-layout
+      //解决 bug: https://github.com/PolymerElements/paper-dialog/issues/7
+      
+      patchOverlay (event) {
+        if (event.target.withBackdrop) {
+          event.target.parentNode.insertBefore(event.target.backdropElement, event.target)
+        }
+      }
+    }
+
+    window.customElements.define(PscaFormDialogBehaviour.is, PscaFormDialogBehaviour);
+  </script>
+</dom-module>
