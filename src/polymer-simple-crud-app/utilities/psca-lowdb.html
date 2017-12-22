@@ -60,7 +60,7 @@
         this.set('adapter', new LocalStorage('db'))
         this.set('db', low(this.adapter))
 
-        this.loadAPIConfig('src/polymer-simple-crud-app/data/quotes.json', function(response) {
+        this.load('src/polymer-simple-crud-app/data/quotes.json', function(response) {
           const defaultQuotes = JSON.parse(response)
           this.db.defaults({ 
             quotes: defaultQuotes 
@@ -79,6 +79,17 @@
         });
       }
 
+      load(filepath, callback) {
+        const xobj = new XMLHttpRequest()
+        xobj.overrideMimeType("application/json")
+        xobj.open('GET', filepath, true)
+        xobj.onreadystatechange = function () {
+          if (xobj.readyState === 4 && xobj.status === 200) {
+            callback(xobj.responseText)
+          }
+        }
+        xobj.send(null)
+      }
     }
 
     window.customElements.define(PscaLowdb.is, PscaLowdb);
