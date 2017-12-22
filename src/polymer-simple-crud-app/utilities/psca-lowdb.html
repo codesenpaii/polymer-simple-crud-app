@@ -60,9 +60,10 @@
         this.set('adapter', new LocalStorage('db'))
         this.set('db', low(this.adapter))
 
+        const self = this
         this.load('src/polymer-simple-crud-app/data/quotes.json', function(response) {
           const defaultQuotes = JSON.parse(response)
-          this.db.defaults({ 
+          self.db.defaults({ 
             quotes: defaultQuotes 
           }).write()
         })
