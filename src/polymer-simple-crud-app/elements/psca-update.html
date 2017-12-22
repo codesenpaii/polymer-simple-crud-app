@@ -27,16 +27,10 @@
       </div>
       <div class="box">
         <!-- Submit form on-enter -->
-        <iron-a11y-keys target="update-form" keys="enter" on-keys-pressed="submitForm"></iron-a11y-keys>
+        <iron-a11y-keys target="update-form" keys="enter" on-keys-pressed="updateQuote"></iron-a11y-keys>
 
-        <iron-form id="update-form" on-iron-form-presubmit="changeFormMethod" on-iron-form-response="updateQuote">
-          <form method="post" action="[[ url ]]">
-
-            <input type="hidden" name="token" value="[[ config.token ]]">
-            <input type="hidden" name="project" value="[[ config.project ]]">
-            <input type="hidden" name="collection" value="[[ config.collection ]]">
-            <input type="hidden" name="appid" value="[[ config.appid ]]">
-            <input type="hidden" name="id" value="[[ editMode.value.id ]]">
+        <iron-form id="update-form">
+          <form>
 
             <paper-textarea name="quote" spellcheck="false" autofocus
               label="Quotes"
@@ -49,7 +43,7 @@
 
             <div class="buttons">
               <paper-button class="dialog-dismiss" dialog-dismiss>Cancel</paper-button>
-              <paper-button class="dialog-confirm" on-click="submitForm">
+              <paper-button class="dialog-confirm" on-click="updateQuote">
                 <paper-spinner-lite id="spinner" active$="[[editMode.loading]]"></paper-spinner-lite>
                 Update
               </paper-button>
@@ -71,8 +65,7 @@
       static get is() { return 'psca-update'; }
       static get properties() {
         return {
-          config: Object,
-          url: String,
+          db: Object,
           quotes: {
             type: Array,
             notify: true
@@ -98,28 +91,16 @@
       }
 
       updateQuote (event) {
-        if (event.detail.status == 200) {
-          this.set('quotes.' + this.editMode.index, Object.assign({}, this.editMode.value))
-          this.$['edit-modal'].close()
-        }
-        this.set('editMode.loading', false)
-      }
-
-      // Submit form
-      // Submit form manually because of paper-input bug, can't press enter to submit
-      // and paper-button can't have type=submit, so submit on-click
-      submitForm () {
         const form = this.$['update-form'];
         if (form.validate()) {
-          this.set('editMode.loading', true)
-          form.submit()
-        }
-      }
+          // Update quote value
+          this.set('quotes.' + this.editMode.index, Object.assign({}, this.editMode.value))
+          // Write to local storage db 
+          this.db.set('quotes', this.quotes).write()
 
-      // Iron-form only accept body params as post method
-      // but nowDB update_id via put method
-      changeFormMethod (event) {
-        this.$['update-form'].request.method = 'put'
+          this.$['edit-modal'].close()
+          this.set('editMode.loading', false)
+        }
       }
     }
     window.customElements.define(PscaUpdate.is, PscaUpdate);

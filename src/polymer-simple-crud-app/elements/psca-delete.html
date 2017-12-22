@@ -10,14 +10,6 @@
       }
     </style>
 
-    <!-- [Delete] Quote Ajax -->
-    <iron-ajax id="delete-ajax"
-      url="[[ url ]][[ deleteMode.id ]]"
-      method="delete"
-      handle-as="json"
-      on-response="removeComplete">
-    </iron-ajax>
-
   </template>
 
   <script>
@@ -29,7 +21,7 @@
       static get is() { return 'psca-delete'; }
       static get properties() {
         return {
-          url: String,
+          db: Object,
           quotes: {
             type: Array,
             notify: true
@@ -44,14 +36,12 @@
       }
 
       // On [DELETE] button tapped / clicked
-      removeQuote (event) {
-        const self  = this
+      removeQuote (deleteMode) {
         // Update deletedId from clicked button
         if (confirm("Delete quote '" + this.quotes[this.deleteMode.index].quote + "'.\n\nAre you sure?")) {
-          this.$['delete-ajax'].generateRequest()
-          this.removeComplete = () => {
-            self.splice('quotes', this.deleteMode.index, 1)
-          }
+          this.splice('quotes', this.deleteMode.index, 1)
+          // Write to local storage db 
+          this.db.set('quotes', this.quotes).write()
         }
       }
     }

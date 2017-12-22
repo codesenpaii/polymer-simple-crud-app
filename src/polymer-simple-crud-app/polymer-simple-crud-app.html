@@ -14,6 +14,8 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
 
+<link rel="import" href="utilities/psca-lowdb.html">
+
 <link rel="import" href="elements/psca-create.html">
 <link rel="import" href="elements/psca-read.html">
 <link rel="import" href="elements/psca-update.html">
@@ -82,8 +84,11 @@
       }
     </style>
 
+    <!-- Get db object from lowdb -->
+    <psca-lowdb db="{{ db }}"></psca-lowdb>
+
     <!-- App Layout Container -->
-    <app-drawer-layout fullbleed narrow="{{narrow}}">
+    <app-drawer-layout fullbleed>
       <app-header-layout has-scrolling-region 
         create-mode$=[[createMode.enabled]]
         edit-mode$=[[editMode.enabled]]>
@@ -111,28 +116,26 @@
         <main id="content">
 
           <psca-create 
-            config="[[ config ]]" 
-            url="[[ urls.create ]]" 
+            db="[[ db ]]"
             quotes="{{ quotes }}"
             create-mode="{{ createMode }}">
           </psca-create>
           
           <psca-read 
-            url="[[ urls.read ]]" 
+            db="[[ db ]]" 
             quotes="{{ quotes }}"
             edit-mode="{{ editMode }}"
             delete-mode="{{ deleteMode }}">
           </psca-read>
         
           <psca-update 
-            config="[[ config ]]" 
-            url="[[ urls.update ]]" 
+            db="[[ db ]]"
             quotes="{{ quotes }}"
             edit-mode="{{ editMode }}">
           </psca-update>
         
           <psca-delete 
-            url="[[ urls.delete ]]" 
+            db="[[ db ]]" 
             quotes="{{ quotes }}"
             delete-mode="{{ deleteMode }}">
           </psca-delete>
@@ -153,8 +156,7 @@
       static get is() { return 'polymer-simple-crud-app'; }
       static get properties() {
         return {
-          config: Object,
-          urls  : Object,
+          db: Object,
           quotes: Array,
           // Current item selector information
           createMode: {
@@ -173,47 +175,6 @@
           },
           deleteMode: Object
         }
-      }
-      
-      constructor () {
-        super()
-
-        // NowDB API Configuration
-        // http://nowdb.net
-
-        const self = this
-
-        this.loadAPIConfig('src/polymer-simple-crud-app/data/config.json', function(response) {
-          const apiBaseUrl = 'http://io.nowdb.net/v2'
-          const apiConfig  = JSON.parse(response)
-          
-          self.set('config', apiConfig)
-
-          const buildUrl = function (action) {
-            return apiBaseUrl + '/' + action + '/token/' + apiConfig.token + '/project/' + apiConfig.project + '/collection/' + apiConfig.collection + '/appid/' + apiConfig.appid
-          }
-  
-          // Set CRUD Urls
-          self.set('urls', {
-            'create': apiBaseUrl + '/insert',
-            'read'  : buildUrl('select_all'),
-            'update': apiBaseUrl + '/update_id',
-            'delete': buildUrl('remove_id') + '/id/'
-          })
-        })
-      }
-
-      // Load from data/config.json
-      loadAPIConfig(filepath, callback) {
-        const xobj = new XMLHttpRequest()
-        xobj.overrideMimeType("application/json")
-        xobj.open('GET', filepath, true)
-        xobj.onreadystatechange = function () {
-          if (xobj.readyState === 4 && xobj.status === 200) {
-            callback(xobj.responseText)
-          }
-        }
-        xobj.send(null)
       }
 
       // Trigger createMode Observer in psca-create.html

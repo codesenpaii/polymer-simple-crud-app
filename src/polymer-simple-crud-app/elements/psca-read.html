@@ -73,19 +73,10 @@
         transform: rotate(360deg);
       }
     </style>
-
-    <!-- [Read] Quote Ajax -->
-    <iron-ajax id="read-ajax" 
-      auto
-      url="[[ url ]]"
-      handle-as="json"
-      on-response="getQuotes"
-      debounce-duration="100">
-    </iron-ajax>
     
     <!-- Quote List -->
     <template is="dom-repeat" items="[[ quotes ]]" as="item">
-      <div class="quote" data-id$="[[ item.id ]]" data-index$="[[ index ]]"
+      <div class="quote" data-index$="[[ index ]]"
         on-click="enableEditMode">
         <div class="item">
           <svg xmlns="http://www.w3.org/2000/svg" width="95" height="95" viewBox="0 0 95.3 95.3"><path d="M30.5 43.9c-2.3-0.7-4.7-1-7-1 -3.5 0-6.5 0.8-8.8 1.8 2.2-8.1 7.5-22 18-23.5 1-0.1 1.8-0.8 2-1.8l2.3-8.2c0.2-0.7 0.1-1.4-0.3-2s-1-1-1.7-1.1c-0.8-0.1-1.6-0.2-2.4-0.2 -12.6 0-25.2 13.2-30.4 32.1 -3.1 11.1-4 27.7 3.6 38.2 4.3 5.9 10.5 9 18.5 9.3 0 0 0.1 0 0.1 0 9.9 0 18.7-6.7 21.3-16.2 1.6-5.7 0.9-11.7-2-16.9C41 49.3 36.2 45.6 30.5 43.9z"/><path d="M92.5 54.4c-2.9-5.1-7.6-8.8-13.3-10.5 -2.3-0.7-4.7-1-7-1 -3.5 0-6.5 0.8-8.8 1.8 2.2-8.1 7.5-22 18-23.5 1-0.1 1.8-0.8 2-1.8l2.3-8.2c0.2-0.7 0.1-1.4-0.3-2 -0.4-0.6-1-1-1.7-1.1 -0.8-0.1-1.6-0.2-2.4-0.2 -12.6 0-25.2 13.2-30.4 32.1 -3.1 11.1-4 27.7 3.6 38.2 4.3 5.9 10.5 9 18.5 9.3 0 0 0.1 0 0.1 0 9.9 0 18.7-6.7 21.3-16.2C96.1 65.6 95.4 59.6 92.5 54.4z"/></svg>
@@ -113,7 +104,7 @@
       static get is() { return 'psca-read'; }
       static get properties() {
         return {
-          url: String,
+          db: Object,
           quotes: {
             type: Array,
             notify: true
@@ -128,11 +119,16 @@
           }
         }
       }
+      // On lowdb initialization
+      static get observers() {
+        return [
+          'getQuotes(db)'
+        ]
+      }
       
-      // On [READ] iron-ajax request completed
-      getQuotes (event) {
-        const quotes = event.detail.response
-        this.set('quotes', quotes.reverse()) // Sort descending
+      getQuotes (db) {
+        const quotes = db.get('quotes').value()
+        this.set('quotes', quotes)  
       }
 
       // Trigger editMode Observer in psca-update.html
@@ -155,8 +151,7 @@
       enableDeleteMode (event) {
         const domEl = event.target.closest('.quote')
         this.set('deleteMode', {
-          index: domEl.dataset.index,
-          id: domEl.dataset.id // Just need id
+          index: domEl.dataset.index
         })
       }
     }

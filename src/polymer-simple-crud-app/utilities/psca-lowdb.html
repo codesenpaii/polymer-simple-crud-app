@@ -1,0 +1,86 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.12.0/lodash.min.js"></script>
+<script src="https://unpkg.com/lowdb@0.17.1/dist/low.min.js"></script>
+<script src="https://unpkg.com/lowdb@0.17.1/dist/LocalStorage.min.js"></script>
+
+<dom-module id="psca-lowdb">
+  <template>
+    <style>
+      :host {
+        display: block
+      }
+    </style>
+
+    
+
+  </template>
+
+  <script>
+    /**
+     * `psca-lowdb` Description
+     *
+     * @summary ShortDescription.
+     * @customElement
+     * @polymer
+     * @extends {Polymer.Element}
+     */
+    class PscaLowdb extends Polymer.Element {
+      /**
+       * String providing the tag name to register the element under.
+       */
+      static get is() {
+        return 'psca-lowdb';
+      }
+
+      /**
+       * Object describing property-related metadata used by Polymer features
+       */
+      static get properties() {
+        return {
+          adapter: {
+            type: Object,
+            notify: true
+          },
+          db: {
+            type: Object,
+            notify: true
+          }
+        };
+      }
+
+      /**
+       * Instance of the element is created/upgraded. Use: initializing state,
+       * set up event listeners, create shadow dom.
+       * @constructor
+       */
+      constructor() {
+        super();
+        
+        this.set('adapter', new LocalStorage('db'))
+        this.set('db', low(this.adapter))
+
+        this.loadAPIConfig('src/polymer-simple-crud-app/data/quotes.json', function(response) {
+          const defaultQuotes = JSON.parse(response)
+          this.db.defaults({ 
+            quotes: defaultQuotes 
+          }).write()
+        })
+      }
+
+      /**
+       * Use for one-time configuration of your component after local DOM is initialized. 
+       */
+      ready() {
+        super.ready();
+
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          
+        });
+      }
+
+    }
+
+    window.customElements.define(PscaLowdb.is, PscaLowdb);
+  </script>
+</dom-module>

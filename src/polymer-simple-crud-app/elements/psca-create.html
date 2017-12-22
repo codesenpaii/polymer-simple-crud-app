@@ -27,24 +27,19 @@
       </div>
       <div class="box">
         <!-- Submit form on-enter -->
-        <iron-a11y-keys target="create-form" keys="enter" on-keys-pressed="submitForm"></iron-a11y-keys>
+        <iron-a11y-keys target="create-form" keys="enter" on-keys-pressed="insertQuote"></iron-a11y-keys>
 
-        <iron-form id="create-form" on-iron-form-response="insertQuote">
-          <form method="post" action="[[ url ]]">
-
-            <input type="hidden" name="token" value="[[ config.token ]]">
-            <input type="hidden" name="project" value="[[ config.project ]]">
-            <input type="hidden" name="collection" value="[[ config.collection ]]">
-            <input type="hidden" name="appid" value="[[ config.appid ]]">
+        <iron-form id="create-form">
+          <form>
 
             <paper-textarea name="quote" spellcheck="false" autofocus
-              label="Quotes" placeholder="Insert quotes here" value="[[ quote ]]" required></paper-textarea>
+              label="Quotes" placeholder="Insert quotes here" value="{{ quote::input }}" required></paper-textarea>
             <paper-input type="text" name="quotee" spellcheck="false" 
-              label="Quotee" placeholder="Quotee" value="[[ quotee ]]" required></paper-input>
+              label="Quotee" placeholder="Quotee" value="{{ quotee::input }}" required></paper-input>
 
             <div class="buttons">
               <paper-button class="dialog-dismiss" dialog-dismiss>Cancel</paper-button>
-              <paper-button class="dialog-confirm" on-click="submitForm">
+              <paper-button class="dialog-confirm" on-click="insertQuote">
                 <paper-spinner-lite id="spinner" active$="[[createMode.loading]]"></paper-spinner-lite>
                 Create
               </paper-button>
@@ -66,8 +61,7 @@
       static get is() { return 'psca-create'; }
       static get properties() {
         return {
-          config: Object,
-          url: String,
+          db: Object,
           quotes: {
             type: Array,
             notify: true
@@ -96,29 +90,24 @@
         this.set('createMode.enabled', false)
       }
 
-      insertQuote (event) {
-        if (event.detail.status == 200) {
-          // Append created quote to quote list
-          const quote = event.detail.response[0]
-          this.unshift('quotes', quote) // Add to first element
-          
-          this.$['create-modal'].close()
+      // Called on form submit
+      insertQuote () {
+        const form = this.$['create-form'];
+        if (form.validate()) {
+          // Add to first element
+          this.unshift('quotes', {
+            'quote' : this.quote,
+            'quotee': this.quotee
+          })
+          // Write to local storage db 
+          this.db.set('quotes', this.quotes).write()
 
           // Clear form
           this.quote  = '';
           this.quotee = '';
-        }
-        this.set('createMode.loading', false)
-      }
-
-      // Submit form
-      // Submit form manually because of paper-input bug, can't press enter to submit
-      // and paper-button can't have type=submit, so submit on-click
-      submitForm () {
-        const form = this.$['create-form'];
-        if (form.validate()) {
-          this.set('createMode.loading', true)
-          form.submit()
+          
+          this.set('createMode.loading', false)
+          this.$['create-modal'].close()
         }
       }
     }
